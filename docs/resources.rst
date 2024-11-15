@@ -19,6 +19,9 @@ General Resources
 Integrated (Ethereum) Development Environments
 ==============================================
 
+    * `Wake <https://getwake.io/>`_
+        Python-based development and testing framework with built-in vulnerability detectors.
+
     * `Brownie <https://eth-brownie.readthedocs.io/en/stable/>`_
         Python-based development and testing framework for smart contracts targeting the Ethereum Virtual Machine.
 
@@ -70,6 +73,9 @@ Editor Integrations
 
     * `Ethereum Remix Visual Studio Code extension <https://github.com/ethereum/remix-vscode>`_
         Ethereum Remix extension pack for VS Code
+
+    * `Solidity Visual Studio Code extension, by Ackee Blockchain <https://marketplace.visualstudio.com/items?itemName=AckeeBlockchain.tools-for-solidity>`_
+        This extension adds language and navigation support, as well as vulnerability detectors, and provides a Remix-like experience for testing contracts on your local network.
 
     * `Solidity Visual Studio Code extension, by Juan Blanco <https://juan.blanco.ws/solidity-contracts-in-visual-studio-code/>`_
         Solidity plugin for Microsoft Visual Studio Code that includes syntax highlighting and the Solidity compiler.
