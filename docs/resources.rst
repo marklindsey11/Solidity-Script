@@ -71,7 +71,7 @@ Editor Integrations
     * `Vim Syntastic <https://github.com/vim-syntastic/syntastic>`_
         Plugin for the Vim editor providing compile checking.
 
-* Visual Studio Code (VS Code)    
+* Visual Studio Code (VS Code)
     * `Ethereum Remix Visual Studio Code extension <https://github.com/ethereum/remix-vscode>`_
         Ethereum Remix extension pack for VS Code
         💡 Note: As per the official repository, this extension has been removed from the VSCODE marketplace and will be replaced by a dedicated stand-alone dektop application.
