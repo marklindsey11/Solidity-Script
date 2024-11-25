@@ -19,53 +19,49 @@ General Resources
 Integrated (Ethereum) Development Environments
 ==============================================
 
-    * `Ape <https://docs.apeworx.io/ape/stable/az>`_
-        Python-based web3 development tool for compiling, testing, and interacting with smart contracts.
+* `Ape <https://docs.apeworx.io/ape/stable/az>`_
+        A Python-based web3 development tool for compiling, testing, and interacting with smart contracts.
 
-    * `Brownie <https://eth-brownie.readthedocs.io/en/stable/>`_
-        Python-based development and testing framework for smart contracts targeting the Ethereum Virtual Machine.
+* `Brownie <https://eth-brownie.readthedocs.io/en/stable/>`_
+        A Python-based development and testing framework for smart contracts targeting the Ethereum Virtual Machine.
         💡 Note: As per the official docs, Brownie is no longer actively maintained.
         Future releases may come sporadically - or never at all.
         Check out Ape Framework (first in list) for all your python Ethereum development needs.
 
-    * `Dapp <https://dapp.tools/>`_
+* `Dapp <https://dapp.tools/>`_
         Tool for building, testing and deploying smart contracts from the command-line.
 
-    * `Foundry <https://github.com/foundry-rs/foundry>`_
+* `Foundry <https://github.com/foundry-rs/foundry>`_
         Fast, portable and modular toolkit for Ethereum application development written in Rust.
 
-    * `Hardhat <https://hardhat.org/>`_
+* `Hardhat <https://hardhat.org/>`_
         Ethereum development environment with local Ethereum network, debugging features and plugin ecosystem.
 
-    * `Remix <https://remix.ethereum.org/>`_
+* `Remix <https://remix.ethereum.org/>`_
         Browser-based IDE with integrated compiler and Solidity runtime environment without server-side components.
 
-    * `Truffle <https://trufflesuite.com/truffle/>`_
+* `Truffle <https://trufflesuite.com/truffle/>`_
         Ethereum development framework.
         💡 Note: Consensys announced the sunset of Truffle on September 21, 2023.
-        Current users may check out the migration path and available product support `here:
+        Current users may check out the migration path and available product support `here.
         <https://consensys.io/blog/consensys-announces-the-sunset-of-truffle-and-ganache-and-new-hardhat>`_
 
 Editor Integrations
 ===================
 
 * Emacs
-
     * `Emacs Solidity <https://github.com/ethereum/emacs-solidity/>`_
         Plugin for the Emacs editor providing syntax highlighting and compilation error reporting.
 
 * IntelliJ
-
     * `IntelliJ IDEA plugin <https://plugins.jetbrains.com/plugin/9475-solidity/>`_
         Solidity plugin for IntelliJ IDEA (and all other JetBrains IDEs).
 
 * Sublime Text
-
     * `Package for SublimeText - Solidity language syntax <https://packagecontrol.io/packages/Ethereum/>`_
         Solidity syntax highlighting for SublimeText editor.
 
 * Vim
-
     * `Vim Solidity by Thesis <https://github.com/thesis/vim-solidity/>`_
         Syntax highlighting for Solidity in Vim.
 
@@ -75,10 +71,10 @@ Editor Integrations
     * `Vim Syntastic <https://github.com/vim-syntastic/syntastic>`_
         Plugin for the Vim editor providing compile checking.
 
-* Visual Studio Code (VS Code)
-
+* Visual Studio Code (VS Code)    
     * `Ethereum Remix Visual Studio Code extension <https://github.com/ethereum/remix-vscode>`_
         Ethereum Remix extension pack for VS Code
+        💡 Note: As per the official repository, this extension has been removed from the VSCODE marketplace and will be replaced by a dedicated stand-alone dektop application.
 
     * `Solidity Visual Studio Code extension, by Juan Blanco <https://juan.blanco.ws/solidity-contracts-in-visual-studio-code/>`_
         Solidity plugin for Microsoft Visual Studio Code that includes syntax highlighting and the Solidity compiler.
@@ -91,6 +87,9 @@ Editor Integrations
 
     * `Truffle for VS Code <https://marketplace.visualstudio.com/items?itemName=trufflesuite-csi.truffle-vscode>`_
         Build, debug and deploy smart contracts on Ethereum and EVM-compatible blockchains.
+        💡 Note: This extension has built-in support for the Truffle Suite which is being sunset.
+        For information on ongoing support, migration options and FAQs, visit the `Consensys blog.
+        <https://consensys.io/blog/consensys-announces-the-sunset-of-truffle-and-ganache-and-new-hardhat>`_
 
 Solidity Tools
 ==============
@@ -154,6 +153,9 @@ Solidity Tools
 
 * `Universal Mutator <https://github.com/agroce/universalmutator>`_
     A tool for mutation generation, with configurable rules and support for Solidity and Vyper.
+
+* `Wake <https://github.com/Ackee-Blockchain/wake>`_
+    A Python-based Solidity development and testing framework with built-in vulnerability detectors.
 
 Third-Party Solidity Parsers and Grammars
 =========================================
