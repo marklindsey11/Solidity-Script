@@ -50,18 +50,22 @@ Editor Integrations
 ===================
 
 * Emacs
+
     * `Emacs Solidity <https://github.com/ethereum/emacs-solidity/>`_
         Plugin for the Emacs editor providing syntax highlighting and compilation error reporting.
 
 * IntelliJ
+
     * `IntelliJ IDEA plugin <https://plugins.jetbrains.com/plugin/9475-solidity/>`_
         Solidity plugin for IntelliJ IDEA (and all other JetBrains IDEs).
 
 * Sublime Text
+
     * `Package for SublimeText - Solidity language syntax <https://packagecontrol.io/packages/Ethereum/>`_
         Solidity syntax highlighting for SublimeText editor.
 
 * Vim
+
     * `Vim Solidity by Thesis <https://github.com/thesis/vim-solidity/>`_
         Syntax highlighting for Solidity in Vim.
 
@@ -72,9 +76,10 @@ Editor Integrations
         Plugin for the Vim editor providing compile checking.
 
 * Visual Studio Code (VS Code)
+
     * `Ethereum Remix Visual Studio Code extension <https://github.com/ethereum/remix-vscode>`_
         Ethereum Remix extension pack for VS Code
-        💡 Note: As per the official repository, this extension has been removed from the VSCODE marketplace and will be replaced by a dedicated stand-alone dektop application.
+        💡 Note: As per the official repository, this extension has been removed from the VSCODE marketplace and will be replaced by a dedicated stand-alone desktop application.
 
     * `Solidity Visual Studio Code extension, by Juan Blanco <https://juan.blanco.ws/solidity-contracts-in-visual-studio-code/>`_
         Solidity plugin for Microsoft Visual Studio Code that includes syntax highlighting and the Solidity compiler.
