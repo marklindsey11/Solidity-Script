@@ -46,6 +46,7 @@
 #include <fstream>
 #include <limits>
 #include <iterator>
+#include <stack>
 
 using namespace solidity;
 using namespace solidity::evmasm;
@@ -971,6 +972,84 @@ void appendBigEndianUint16(bytes& _dest, ValueT _value)
 	assertThrow(_value <= 0xFFFF, AssemblyException, "");
 	appendBigEndian(_dest, 2, static_cast<size_t>(_value));
 }
+
+uint16_t calculateMaxStackHeight(AssemblyItems const& _items, uint16_t _args)
+{
+	static auto constexpr UNVISITED = std::numeric_limits<size_t>::max();
+
+	solAssert(!_items.empty());
+	uint16_t maxStackHeight = _args;
+	std::stack<size_t> worklist;
+	std::vector<size_t> stackHeights(_items.size(), UNVISITED);
+
+	// Init first item stack height to number of inputs to the code section
+	// stackHeights stores stack height for an item before the item execution
+	stackHeights[0] = _args;
+	// Push first item index to the worklist
+	worklist.push(0u);
+	while (!worklist.empty())
+	{
+		size_t idx = worklist.top();
+		worklist.pop();
+		AssemblyItem const& item = _items[idx];
+		size_t stackHeightChange = item.deposit();
+		size_t stackHeight = stackHeights[idx];
+		solAssert(stackHeight != UNVISITED);
+
+		std::vector<size_t> successors;
+
+		// Add next instruction to successors for non-changing control flow instructions
+		if (!(item.hasInstruction() && SemanticInformation::terminatesControlFlow(item.instruction())) &&
+			item.type() != RelativeJump &&
+			item.type() != RetF &&
+			item.type() != ReturnContract &&
+			item.type() != JumpF
+		)
+		{
+			solAssert(idx < _items.size() - 1, "No terminating instruction.");
+			successors.emplace_back(idx + 1);
+		}
+
+		// Add jumps destinations to successors
+		if (item.type() == RelativeJump || item.type() == ConditionalRelativeJump)
+		{
+			auto const it = std::find(_items.begin(), _items.end(), item.tag());
+			solAssert(it != _items.end(), "Tag not found.");
+			successors.emplace_back(static_cast<size_t>(std::distance(_items.begin(), it)));
+		}
+
+		solAssert(stackHeight + stackHeightChange <= std::numeric_limits<uint16_t>::max(), "Invalid stack height");
+		maxStackHeight = std::max(maxStackHeight, static_cast<uint16_t>(stackHeight + stackHeightChange));
+		stackHeight += stackHeightChange;
+
+		// Set stack height for all instruction successors
+		for (size_t s: successors)
+		{
+			solAssert(s < stackHeights.size());
+			// Set stack height for newly visited
+			if (stackHeights[s] == UNVISITED)
+			{
+				stackHeights[s] = stackHeight;
+				worklist.push(s);
+			}
+			else
+			{
+				solAssert(s < stackHeights.size());
+				// For backward jump successor stack height must be equal
+				if (s < idx)
+					solAssert(stackHeights[s] == stackHeight, "Stack height mismatch.");
+
+				// If successor stack height is smaller update it and recalculate
+				if (stackHeight > stackHeights[s])
+				{
+					stackHeights[s] = stackHeight;
+					worklist.push(s);
+				}
+			}
+		}
+	}
+	return maxStackHeight;
+}
 }
 
 std::tuple<bytes, std::vector<size_t>, size_t> Assembly::createEOFHeader(std::set<ContainerID> const& _referencedSubIds) const
@@ -1015,8 +1094,7 @@ std::tuple<bytes, std::vector<size_t>, size_t> Assembly::createEOFHeader(std::se
 	{
 		retBytecode.push_back(codeSection.inputs);
 		retBytecode.push_back(codeSection.outputs);
-		// TODO: Add stack height calculation
-		appendBigEndianUint16(retBytecode, 0xFFFFu);
+		appendBigEndianUint16(retBytecode, calculateMaxStackHeight(codeSection.items, codeSection.inputs));
 	}
 
 	return {retBytecode, codeSectionSizePositions, dataSectionSizePosition};
