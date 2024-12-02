@@ -207,11 +207,13 @@ returns the value associated with the key passed as an argument.
     }
 
 When you declare a public state variable of a struct type, the generated getter function
-returns specific member of the struct as separate elements within a tuple,
+returns each member of the struct as separate elements within a tuple,
 rather than the struct as a single object in memory.
 The members returned appear in the order they are declared in the struct, provided they
-are not omitted. Array members and mapping members within the struct are excluded from the returned tuple.
-Additionally, if the struct consists solely of array members and mapping members, no getter function will be generated.
+are not omitted. The mapping and arrays (with the exception of byte arrays)
+in the struct are omitted because there is no good way to
+select individual array members or provide a key for the mapping
+Additionally, if all struct members are omitted, no getter function will be generated.
 
 .. code-block:: solidity
 
