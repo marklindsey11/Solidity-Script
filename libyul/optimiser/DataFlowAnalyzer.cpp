@@ -42,6 +42,38 @@ using namespace solidity;
 using namespace solidity::util;
 using namespace solidity::yul;
 
+static long int timeSpent {0};
+static bool timerRunning{false};
+
+struct Timer
+{
+	Timer()
+	{
+		if (!timerRunning)
+		{
+			start = std::chrono::steady_clock::now();
+			running = true;
+			timerRunning = true;
+		}
+	}
+	~Timer()
+	{
+		if (running)
+		{
+			timerRunning = false;
+			timeSpent += elapsed();
+		}
+	}
+	long int elapsed() const
+	{
+		if (!running)
+			return 0;
+		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+	}
+	std::chrono::time_point<std::chrono::steady_clock> start;
+	bool running {false};
+};
+
 DataFlowAnalyzer::DataFlowAnalyzer(
 	Dialect const& _dialect,
 	MemoryAndStorage _analyzeStores,
@@ -65,8 +97,15 @@ DataFlowAnalyzer::DataFlowAnalyzer(
 	}
 }
 
+DataFlowAnalyzer::~DataFlowAnalyzer()
+{
+	std::cout << "DFA elapsed cumulative: " << timeSpent << " ms" << std::endl;
+}
+
+
 void DataFlowAnalyzer::operator()(ExpressionStatement& _statement)
 {
+	Timer t;
 	if (m_analyzeStores)
 	{
 		if (auto vars = isSimpleStore(StoreLoadLocation::Storage, _statement))
@@ -98,6 +137,7 @@ void DataFlowAnalyzer::operator()(ExpressionStatement& _statement)
 
 void DataFlowAnalyzer::operator()(Assignment& _assignment)
 {
+	Timer t;
 	std::set<YulName> names;
 	for (auto const& var: _assignment.variableNames)
 		names.emplace(var.name);
@@ -109,6 +149,7 @@ void DataFlowAnalyzer::operator()(Assignment& _assignment)
 
 void DataFlowAnalyzer::operator()(VariableDeclaration& _varDecl)
 {
+	Timer t;
 	std::set<YulName> names;
 	for (auto const& var: _varDecl.variables)
 		names.emplace(var.name);
@@ -125,6 +166,7 @@ void DataFlowAnalyzer::operator()(VariableDeclaration& _varDecl)
 
 void DataFlowAnalyzer::operator()(If& _if)
 {
+	Timer t;
 	clearKnowledgeIfInvalidated(*_if.condition);
 	Environment preEnvironment = m_state.environment;
 
@@ -136,6 +178,7 @@ void DataFlowAnalyzer::operator()(If& _if)
 
 void DataFlowAnalyzer::operator()(Switch& _switch)
 {
+	Timer t;
 	clearKnowledgeIfInvalidated(*_switch.expression);
 	visit(*_switch.expression);
 	std::set<YulName> assignedVariables;
@@ -158,6 +201,7 @@ void DataFlowAnalyzer::operator()(Switch& _switch)
 
 void DataFlowAnalyzer::operator()(FunctionDefinition& _fun)
 {
+	Timer t;
 	// Save all information. We might rather reinstantiate this class,
 	// but this could be difficult if it is subclassed.
 	ScopedSaveAndRestore stateResetter(m_state, {});
@@ -182,6 +226,7 @@ void DataFlowAnalyzer::operator()(FunctionDefinition& _fun)
 
 void DataFlowAnalyzer::operator()(ForLoop& _for)
 {
+	Timer t;
 	// If the pre block was not empty,
 	// we would have to deal with more complicated scoping rules.
 	assertThrow(_for.pre.statements.empty(), OptimizerException, "");
@@ -215,6 +260,7 @@ void DataFlowAnalyzer::operator()(ForLoop& _for)
 
 void DataFlowAnalyzer::operator()(Block& _block)
 {
+	Timer t;
 	size_t numScopes = m_variableScopes.size();
 	pushScope(false);
 	ASTModifier::operator()(_block);
@@ -224,6 +270,7 @@ void DataFlowAnalyzer::operator()(Block& _block)
 
 std::optional<YulName> DataFlowAnalyzer::storageValue(YulName _key) const
 {
+	Timer t;
 	if (YulName const* value = valueOrNullptr(m_state.environment.storage, _key))
 		return *value;
 	else
@@ -232,6 +279,7 @@ std::optional<YulName> DataFlowAnalyzer::storageValue(YulName _key) const
 
 std::optional<YulName> DataFlowAnalyzer::memoryValue(YulName _key) const
 {
+	Timer t;
 	if (YulName const* value = valueOrNullptr(m_state.environment.memory, _key))
 		return *value;
 	else
@@ -240,6 +288,7 @@ std::optional<YulName> DataFlowAnalyzer::memoryValue(YulName _key) const
 
 std::optional<YulName> DataFlowAnalyzer::keccakValue(YulName _start, YulName _length) const
 {
+	Timer t;
 	if (YulName const* value = valueOrNullptr(m_state.environment.keccak, std::make_pair(_start, _length)))
 		return *value;
 	else
@@ -248,6 +297,7 @@ std::optional<YulName> DataFlowAnalyzer::keccakValue(YulName _start, YulName _le
 
 void DataFlowAnalyzer::handleAssignment(std::set<YulName> const& _variables, Expression* _value, bool _isDeclaration)
 {
+	Timer t;
 	if (!_isDeclaration)
 		clearValues(_variables);
 
@@ -307,11 +357,13 @@ void DataFlowAnalyzer::handleAssignment(std::set<YulName> const& _variables, Exp
 
 void DataFlowAnalyzer::pushScope(bool _functionScope)
 {
+	Timer t;
 	m_variableScopes.emplace_back(_functionScope);
 }
 
 void DataFlowAnalyzer::popScope()
 {
+	Timer t;
 	for (auto const& name: m_variableScopes.back().variables)
 	{
 		m_state.value.erase(name);
@@ -322,6 +374,7 @@ void DataFlowAnalyzer::popScope()
 
 void DataFlowAnalyzer::clearValues(std::set<YulName> _variables)
 {
+	Timer t;
 	// All variables that reference variables to be cleared also have to be
 	// cleared, but not recursively, since only the value of the original
 	// variables changes. Example:
@@ -367,11 +420,13 @@ void DataFlowAnalyzer::clearValues(std::set<YulName> _variables)
 
 void DataFlowAnalyzer::assignValue(YulName _variable, Expression const* _value)
 {
+	Timer t;
 	m_state.value[_variable] = {_value, m_loopDepth};
 }
 
 void DataFlowAnalyzer::clearKnowledgeIfInvalidated(Block const& _block)
 {
+	Timer t;
 	if (!m_analyzeStores)
 		return;
 	SideEffectsCollector sideEffects(m_dialect, _block, &m_functionSideEffects);
@@ -386,6 +441,7 @@ void DataFlowAnalyzer::clearKnowledgeIfInvalidated(Block const& _block)
 
 void DataFlowAnalyzer::clearKnowledgeIfInvalidated(Expression const& _expr)
 {
+	Timer t;
 	if (!m_analyzeStores)
 		return;
 	SideEffectsCollector sideEffects(m_dialect, _expr, &m_functionSideEffects);
@@ -400,6 +456,7 @@ void DataFlowAnalyzer::clearKnowledgeIfInvalidated(Expression const& _expr)
 
 bool DataFlowAnalyzer::inScope(YulName _variableName) const
 {
+	Timer t;
 	for (auto const& scope: m_variableScopes | ranges::views::reverse)
 	{
 		if (scope.variables.count(_variableName))
@@ -412,6 +469,7 @@ bool DataFlowAnalyzer::inScope(YulName _variableName) const
 
 std::optional<u256> DataFlowAnalyzer::valueOfIdentifier(YulName const& _name) const
 {
+	Timer t;
 	if (AssignedValue const* value = variableValue(_name))
 		if (Literal const* literal = std::get_if<Literal>(value->value))
 			return literal->value.value();
@@ -423,6 +481,7 @@ std::optional<std::pair<YulName, YulName>> DataFlowAnalyzer::isSimpleStore(
 	ExpressionStatement const& _statement
 ) const
 {
+	Timer t;
 	if (FunctionCall const* funCall = std::get_if<FunctionCall>(&_statement.expression))
 		if (funCall->functionName.name == m_storeFunctionName[static_cast<unsigned>(_location)])
 			if (Identifier const* key = std::get_if<Identifier>(&funCall->arguments.front()))
@@ -436,6 +495,7 @@ std::optional<YulName> DataFlowAnalyzer::isSimpleLoad(
 	Expression const& _expression
 ) const
 {
+	Timer t;
 	if (FunctionCall const* funCall = std::get_if<FunctionCall>(&_expression))
 		if (funCall->functionName.name == m_loadFunctionName[static_cast<unsigned>(_location)])
 			if (Identifier const* key = std::get_if<Identifier>(&funCall->arguments.front()))
@@ -445,6 +505,7 @@ std::optional<YulName> DataFlowAnalyzer::isSimpleLoad(
 
 std::optional<std::pair<YulName, YulName>> DataFlowAnalyzer::isKeccak(Expression const& _expression) const
 {
+	Timer t;
 	if (FunctionCall const* funCall = std::get_if<FunctionCall>(&_expression))
 		if (funCall->functionName.name.str() == m_dialect.builtin(*m_dialect.hashFunctionHandle()).name)
 			if (Identifier const* start = std::get_if<Identifier>(&funCall->arguments.at(0)))
@@ -455,6 +516,7 @@ std::optional<std::pair<YulName, YulName>> DataFlowAnalyzer::isKeccak(Expression
 
 void DataFlowAnalyzer::joinKnowledge(Environment const& _olderEnvironment)
 {
+	Timer t;
 	if (!m_analyzeStores)
 		return;
 	joinKnowledgeHelper(m_state.environment.storage, _olderEnvironment.storage);
@@ -470,6 +532,7 @@ void DataFlowAnalyzer::joinKnowledgeHelper(
 	std::unordered_map<YulName, YulName> const& _older
 )
 {
+	Timer t;
 	// We clear if the key does not exist in the older map or if the value is different.
 	// This also works for memory because _older is an "older version"
 	// of m_state.environment.memory and thus any overlapping write would have cleared the keys
