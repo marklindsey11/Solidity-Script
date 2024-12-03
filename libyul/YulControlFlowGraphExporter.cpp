@@ -31,7 +31,7 @@ using namespace solidity::langutil;
 using namespace solidity::util;
 using namespace solidity::yul;
 
-YulControlFlowGraphExporter::YulControlFlowGraphExporter(ControlFlow const& _controlFlow, ControlFlowLiveness const& _liveness): m_controlFlow(_controlFlow), m_liveness(_liveness)
+YulControlFlowGraphExporter::YulControlFlowGraphExporter(ControlFlow const& _controlFlow, ControlFlowLiveness const* _liveness): m_controlFlow(_controlFlow), m_liveness(_liveness)
 {
 }
 
@@ -58,13 +58,16 @@ std::string YulControlFlowGraphExporter::varToString(SSACFG const& _cfg, SSACFG:
 
 Json YulControlFlowGraphExporter::run()
 {
+	if (m_liveness)
+		yulAssert(&m_liveness->controlFlow.get() == &m_controlFlow);
+
 	Json yulObjectJson = Json::object();
-	yulObjectJson["blocks"] = exportBlock(*m_controlFlow.mainGraph, SSACFG::BlockId{0}, m_liveness.mainLiveness.get());
+	yulObjectJson["blocks"] = exportBlock(*m_controlFlow.mainGraph, SSACFG::BlockId{0}, m_liveness ? m_liveness->mainLiveness.get() : nullptr);
 
 	Json functionsJson = Json::object();
 	size_t index = 0;
 	for (auto const& [function, functionGraph]: m_controlFlow.functionGraphMapping)
-		functionsJson[function->name.str()] = exportFunction(*functionGraph, m_liveness.functionLiveness[index++].get());
+		functionsJson[function->name.str()] = exportFunction(*functionGraph, m_liveness ? m_liveness->functionLiveness[index++].get() : nullptr);
 	yulObjectJson["functions"] = functionsJson;
 
 	return yulObjectJson;
