@@ -14,9 +14,8 @@ contract C {
 	}
 }
 // ====
-// EVMVersion: >=byzantium
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
 // constructor(), 20 wei
 // gas irOptimized: 61548
@@ -25,7 +24,7 @@ contract C {
 // gas legacy code: 215400
 // gas legacyOptimized: 61715
 // gas legacyOptimized code: 106800
-// f(uint256): 20 -> 0x760ad2428f897a994a0377ef5a3b626dfe295672
+// f(uint256): 20 -> 0x9d73add92c0d464f534262259cf6914e28caceaa
 // x() -> 1
 // f(uint256): 20 -> FAILURE
 // x() -> 1
@@ -34,5 +33,5 @@ contract C {
 // gas legacy: 477722
 // gas legacyOptimized: 299567
 // x() -> 1
-// stack(uint256): 10 -> 0xd64ba06e96a2fa752f7c8e10c7b6912e518e40c2
+// stack(uint256): 10 -> 0xb2c409d23d8105ff2553a318f2f73f47c80c7701
 // x() -> 2

@@ -9,10 +9,10 @@ contract C {
     }
 }
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
 // f1() ->
-// ~ emit TestA(function): #0xa80a5d214a51e09e24fa3e854004da1ac3f5beffc27fc3050000000000000000
+// ~ emit TestA(function): #0x347eaa94e3f63220b1f27af5888d33325ddbd4dec27fc3050000000000000000
 // f2(uint256): 1 ->
-// ~ emit TestB(function): #0xa80a5d214a51e09e24fa3e854004da1ac3f5beffbf3724af0000000000000000
+// ~ emit TestB(function): #0x347eaa94e3f63220b1f27af5888d33325ddbd4debf3724af0000000000000000

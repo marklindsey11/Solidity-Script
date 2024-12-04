@@ -10,9 +10,9 @@ contract C {
     }
 }
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
-// f() -> 0x1a7b7ed5ae36cd8c4f6da702d8409d6cf9bd1f6d
+// f() -> 0xb3549131064ca5e21e50c0344a84a43c5d8f5b4b
 // g() -> true
 // h(function): left(0x1122334400112233445566778899AABBCCDDEEFF42424242) -> 0x1122334400112233445566778899AABBCCDDEEFF

@@ -14,7 +14,7 @@ contract C {
     function fun() public pure {}
 }
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
-// f() -> 0x1, 0x67831474d284bf49471795e23b524e80a6b386a0946644cd0000000000000000, 9
+// f() -> 0x1, 0x9af5ffe522062ee0c1ed0c96288c657f99645bb7946644cd0000000000000000, 9

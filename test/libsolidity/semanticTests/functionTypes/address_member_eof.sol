@@ -7,7 +7,7 @@ contract C {
     }
 }
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
-// f() -> 0xab639b56c881a5b607f4a706bcf1d7d383b83703, 0xab639b56c881a5b607f4a706bcf1d7d383b83703
+// f() -> 0xc19c03f456eb6e9b1d3e41daa69053e44bdbd949, 0xc19c03f456eb6e9b1d3e41daa69053e44bdbd949

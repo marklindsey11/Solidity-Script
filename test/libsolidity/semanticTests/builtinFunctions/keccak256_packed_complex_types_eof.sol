@@ -11,7 +11,7 @@ contract C {
     }
 }
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
-// f() -> 0xba4f20407251e4607cd66b90bfea19ec6971699c03e4a4f3ea737d5818ac27ae, 0xba4f20407251e4607cd66b90bfea19ec6971699c03e4a4f3ea737d5818ac27ae, 0xb8fcf925e706038045e8e57a2620706dfa046b8977add2f3c9b2641f2ea6c8b7
+// f() -> 0xba4f20407251e4607cd66b90bfea19ec6971699c03e4a4f3ea737d5818ac27ae, 0xba4f20407251e4607cd66b90bfea19ec6971699c03e4a4f3ea737d5818ac27ae, 0x8a1a644bc732d428df88d4952d1be96a9217ec31fdec3f55bae4059f936e955d

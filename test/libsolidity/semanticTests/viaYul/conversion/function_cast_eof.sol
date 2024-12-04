@@ -16,10 +16,9 @@ contract C {
 	}
 }
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
 // f(uint256): 2 -> 4
 // h(uint256): 2 -> 5
-// t() -> 0x86e73fe93c23a38c4bdba9e4b9cc0ddcc0fe293eb3de648b0000000000000000, 0x86e73fe93c23a38c4bdba9e4b9cc0ddcc0fe293eb3de648b0000000000000000
-
+// t() -> 0x51ac6a341cdab4263623cddef6e4860d0679b0a9b3de648b0000000000000000, 0x51ac6a341cdab4263623cddef6e4860d0679b0a9b3de648b0000000000000000

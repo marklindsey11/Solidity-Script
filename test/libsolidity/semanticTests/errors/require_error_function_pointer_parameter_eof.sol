@@ -15,7 +15,7 @@ contract C
 }
 
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
-// f() -> FAILURE, hex"271b1dfa", hex"dfc163ea0fefc2097b7425134f69fcafa3742b0af37cdc8e0000000000000000"
+// f() -> FAILURE, hex"271b1dfa", hex"a4dc3b5fce39438ce512c732ccb22e3212856bb6f37cdc8e0000000000000000"

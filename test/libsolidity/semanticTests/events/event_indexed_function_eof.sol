@@ -5,8 +5,8 @@ contract C {
     }
 }
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
 // f() ->
-// ~ emit Test(function): #0x1141c91a4a817b60b5339bc09ac809cedc7649ab26121ff00000000000000000
+// ~ emit Test(function): #0x8f8cc95dcbe7358c1cf1409d3a7ad079e89576bb26121ff00000000000000000

@@ -13,8 +13,8 @@ contract C {
 	}
 }
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
-// testYul() -> 0xb546c6ff998ecadc80f48650a3d77fd361aebb4e
-// testSol() -> 0xb546c6ff998ecadc80f48650a3d77fd361aebb4e
+// testYul() -> 0x0b4a2e943bbeb51ee55e5785a597202569667e7b
+// testSol() -> 0x0b4a2e943bbeb51ee55e5785a597202569667e7b

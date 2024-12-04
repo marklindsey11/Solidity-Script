@@ -20,15 +20,15 @@ contract C {
     }
 }
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
 // x() -> 0
 // y() -> 0
 // increment() ->
 // y() -> 1
 // set() ->
-// x() -> 0xb7ac6c1bf268409abee9be742a25c518cfd13729d09de08a0000000000000000
+// x() -> 0xfc0c3cc95d8d080a1f9ff0a9474a22423d046267d09de08a0000000000000000
 // increment() ->
 // y() -> 2
 // incrementIndirectly() ->
