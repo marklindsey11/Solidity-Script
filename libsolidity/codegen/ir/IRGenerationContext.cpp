@@ -156,7 +156,12 @@ size_t IRGenerationContext::reservedMemory()
 		immutableVariablesSize += var->type()->sizeOnStack() * 32;
 	}
 
-	solAssert(immutableVariablesSize == reservedMemory);
+	// In Creation context check that only immutable variables or library address are stored in the reserved memory.
+	// In Deployed context (for EOF) m_immutableVariables contains offsets in EOF data section.
+	solAssert(
+		m_executionContext == ExecutionContext::Deployed ||
+		immutableVariablesSize + (m_libraryAddressImmutableOffset.has_value() ? 32 : 0) == reservedMemory
+	);
 
 	m_reservedMemory = std::nullopt;
 	return reservedMemory;
