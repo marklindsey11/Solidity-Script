@@ -1018,6 +1018,7 @@ std::string IRGenerator::deployCode(ContractDefinition const& _contract)
 		t("auxDataStart", std::to_string(CompilerUtils::generalPurposeMemoryStart));
 		solAssert(m_context.reservedMemorySize() <= 0xFFFF, "Reserved memory size exceeded maximum allowed EOF data section size.");
 		t("auxDataSize", std::to_string(m_context.reservedMemorySize()));
+		t("library", _contract.isLibrary());
 	}
 	else
 		t("immutables", std::move(immutables));
