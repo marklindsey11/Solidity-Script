@@ -177,7 +177,11 @@ std::string IRGenerator::generate(
 			constructorParams.emplace_back(m_context.newYulVariable());
 		t(
 			"copyConstructorArguments",
-			m_utils.copyConstructorArgumentsToMemoryFunction(_contract, IRNames::creationObject(_contract))
+			m_utils.copyConstructorArgumentsToMemoryFunction(
+				_contract,
+				IRNames::creationObject(_contract),
+				m_context.eofVersion()
+			)
 		);
 	}
 	t("constructorParams", joinHumanReadable(constructorParams));

@@ -4714,7 +4714,8 @@ std::string YulUtilFunctions::extractReturndataFunction()
 
 std::string YulUtilFunctions::copyConstructorArgumentsToMemoryFunction(
 	ContractDefinition const& _contract,
-	std::string const& _creationObjectName
+	std::string const& _creationObjectName,
+	std::optional<uint8_t> _eofVersion
 )
 {
 	std::string functionName = "copy_arguments_for_constructor_" +
@@ -4730,11 +4731,17 @@ std::string YulUtilFunctions::copyConstructorArgumentsToMemoryFunction(
 
 		return util::Whiskers(R"(
 			function <functionName>() -> <retParams> {
-				let programSize := datasize("<object>")
-				let argSize := sub(codesize(), programSize)
+				<?eof>
+					let argSize := calldatasize()
+					let memoryDataOffset := <allocate>(argSize)
+					calldatacopy(memoryDataOffset, 0, argSize)
+				<!eof>
+					let programSize := datasize("<object>")
+					let argSize := sub(codesize(), programSize)
 
-				let memoryDataOffset := <allocate>(argSize)
-				codecopy(memoryDataOffset, programSize, argSize)
+					let memoryDataOffset := <allocate>(argSize)
+					codecopy(memoryDataOffset, programSize, argSize)
+				</eof>
 
 				<retParams> := <abiDecode>(memoryDataOffset, add(memoryDataOffset, argSize))
 			}
@@ -4744,6 +4751,7 @@ std::string YulUtilFunctions::copyConstructorArgumentsToMemoryFunction(
 		("object", _creationObjectName)
 		("allocate", allocationFunction())
 		("abiDecode", abiFunctions.tupleDecoder(FunctionType(*_contract.constructor()).parameterTypes(), true))
+		("eof", _eofVersion.has_value())
 		.render();
 	});
 }
