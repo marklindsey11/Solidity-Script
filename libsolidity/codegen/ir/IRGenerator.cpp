@@ -1153,6 +1153,13 @@ void IRGenerator::resetContext(ContractDefinition const& _contract, ExecutionCon
 		m_context.debugInfoSelection(),
 		m_context.soliditySourceProvider()
 	);
+	if (m_eofVersion.has_value() && _context == ExecutionContext::Deployed)
+	{
+		newContext.setImmutableVariables(m_context.immutableVariables());
+		if (_contract.isLibrary())
+			newContext.setLibraryAddressImmutableOffset(m_context.libraryAddressImmutableOffset());
+	}
+
 	m_context = std::move(newContext);
 
 	m_context.setMostDerivedContract(_contract);
