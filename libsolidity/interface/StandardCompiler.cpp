@@ -1775,6 +1775,9 @@ Json StandardCompiler::compileYul(InputsAndSettings _inputsAndSettings)
 	if (isArtifactRequested(_inputsAndSettings.outputSelection, sourceName, contractName, "yulCFGJson", wildcardMatchesExperimental))
 		output["contracts"][sourceName][contractName]["yulCFGJson"] = stack.cfgJson();
 
+	if (isEthdebugRequested(_inputsAndSettings.outputSelection))
+		output["ethdebug"] = {};
+
 	return output;
 }
 
