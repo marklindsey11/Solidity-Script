@@ -14,8 +14,8 @@ contract C {
     }
 }
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
 // constructor() ->
 // gas irOptimized: 113970
@@ -25,4 +25,4 @@ contract C {
 // gas legacyOptimized: 114187
 // gas legacyOptimized code: 57400
 // deposit(bytes32), 18 wei: 0x1234 ->
-// ~ emit Deposit(address,bytes32,uint256) from 0x32b73100436177e8f2d2aa1214bb4c1230143ec2: #0x3cb69f8aa1103d7ce41821a1b2e1c85c2b63dfa4, #0x1234, 0x00
+// ~ emit Deposit(address,bytes32,uint256) from 0x178b67010aadf7caa75a5b294c151a60000863f3: #0x3950196ad64ce098024d887b715727413ca56a14, #0x1234, 0x00

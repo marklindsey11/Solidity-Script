@@ -1882,20 +1882,8 @@ contract BitMathTest {
         return BitMath.mostSignificantBit(x);
     }
 
-    function getGasCostOfMostSignificantBit(uint256 x) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        BitMath.mostSignificantBit(x);
-        return gasBefore - gasleft();
-    }
-
     function leastSignificantBit(uint256 x) external pure returns (uint8 r) {
         return BitMath.leastSignificantBit(x);
-    }
-
-    function getGasCostOfLeastSignificantBit(uint256 x) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        BitMath.leastSignificantBit(x);
-        return gasBefore - gasleft();
     }
 }
 
@@ -2001,12 +1989,6 @@ pragma solidity >=0.0;
 contract LiquidityMathTest {
     function addDelta(uint128 x, int128 y) external pure returns (uint128 z) {
         return LiquidityMath.addDelta(x, y);
-    }
-
-    function getGasCostOfAddDelta(uint128 x, int128 y) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        LiquidityMath.addDelta(x, y);
-        return gasBefore - gasleft();
     }
 }
 
@@ -3542,18 +3524,6 @@ contract NoDelegateCallTest is NoDelegateCall {
         return block.timestamp / 5;
     }
 
-    function getGasCostOfCanBeDelegateCalled() external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        canBeDelegateCalled();
-        return gasBefore - gasleft();
-    }
-
-    function getGasCostOfCannotBeDelegateCalled() external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        cannotBeDelegateCalled();
-        return gasBefore - gasleft();
-    }
-
     function callsIntoNoDelegateCallFunction() external view {
         noDelegateCallPrivate();
     }
@@ -3655,13 +3625,6 @@ contract OracleTest {
         returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s)
     {
         return observations.observe(time, secondsAgos, tick, index, liquidity, cardinality);
-    }
-
-    function getGasCostOfObserve(uint32[] calldata secondsAgos) external view returns (uint256) {
-        (uint32 _time, int24 _tick, uint128 _liquidity, uint16 _index) = (time, tick, liquidity, index);
-        uint256 gasBefore = gasleft();
-        observations.observe(_time, secondsAgos, _tick, _index, _liquidity, cardinality);
-        return gasBefore - gasleft();
     }
 }
 
@@ -4053,17 +4016,6 @@ contract SqrtPriceMathTest {
         return SqrtPriceMath.getNextSqrtPriceFromInput(sqrtP, liquidity, amountIn, zeroForOne);
     }
 
-    function getGasCostOfGetNextSqrtPriceFromInput(
-        uint160 sqrtP,
-        uint128 liquidity,
-        uint256 amountIn,
-        bool zeroForOne
-    ) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        SqrtPriceMath.getNextSqrtPriceFromInput(sqrtP, liquidity, amountIn, zeroForOne);
-        return gasBefore - gasleft();
-    }
-
     function getNextSqrtPriceFromOutput(
         uint160 sqrtP,
         uint128 liquidity,
@@ -4071,17 +4023,6 @@ contract SqrtPriceMathTest {
         bool zeroForOne
     ) external pure returns (uint160 sqrtQ) {
         return SqrtPriceMath.getNextSqrtPriceFromOutput(sqrtP, liquidity, amountOut, zeroForOne);
-    }
-
-    function getGasCostOfGetNextSqrtPriceFromOutput(
-        uint160 sqrtP,
-        uint128 liquidity,
-        uint256 amountOut,
-        bool zeroForOne
-    ) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        SqrtPriceMath.getNextSqrtPriceFromOutput(sqrtP, liquidity, amountOut, zeroForOne);
-        return gasBefore - gasleft();
     }
 
     function getAmount0Delta(
@@ -4100,28 +4041,6 @@ contract SqrtPriceMathTest {
         bool roundUp
     ) external pure returns (uint256 amount1) {
         return SqrtPriceMath.getAmount1Delta(sqrtLower, sqrtUpper, liquidity, roundUp);
-    }
-
-    function getGasCostOfGetAmount0Delta(
-        uint160 sqrtLower,
-        uint160 sqrtUpper,
-        uint128 liquidity,
-        bool roundUp
-    ) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        SqrtPriceMath.getAmount0Delta(sqrtLower, sqrtUpper, liquidity, roundUp);
-        return gasBefore - gasleft();
-    }
-
-    function getGasCostOfGetAmount1Delta(
-        uint160 sqrtLower,
-        uint160 sqrtUpper,
-        uint128 liquidity,
-        bool roundUp
-    ) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        SqrtPriceMath.getAmount1Delta(sqrtLower, sqrtUpper, liquidity, roundUp);
-        return gasBefore - gasleft();
     }
 }
 
@@ -4203,18 +4122,6 @@ contract SwapMathTest {
         )
     {
         return SwapMath.computeSwapStep(sqrtP, sqrtPTarget, liquidity, amountRemaining, feePips);
-    }
-
-    function getGasCostOfComputeSwapStep(
-        uint160 sqrtP,
-        uint160 sqrtPTarget,
-        uint128 liquidity,
-        int256 amountRemaining,
-        uint24 feePips
-    ) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        SwapMath.computeSwapStep(sqrtP, sqrtPTarget, liquidity, amountRemaining, feePips);
-        return gasBefore - gasleft();
     }
 }
 
@@ -4667,24 +4574,12 @@ contract TickBitmapTest {
         bitmap.flipTick(tick, 1);
     }
 
-    function getGasCostOfFlipTick(int24 tick) external returns (uint256) {
-        uint256 gasBefore = gasleft();
-        bitmap.flipTick(tick, 1);
-        return gasBefore - gasleft();
-    }
-
     function nextInitializedTickWithinOneWord(int24 tick, bool lte)
         external
         view
         returns (int24 next, bool initialized)
     {
         return bitmap.nextInitializedTickWithinOneWord(tick, 1, lte);
-    }
-
-    function getGasCostOfNextInitializedTickWithinOneWord(int24 tick, bool lte) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        bitmap.nextInitializedTickWithinOneWord(tick, 1, lte);
-        return gasBefore - gasleft();
     }
 
     // returns whether the given tick is initialized
@@ -4758,20 +4653,8 @@ contract TickMathTest {
         return TickMath.getSqrtRatioAtTick(tick);
     }
 
-    function getGasCostOfGetSqrtRatioAtTick(int24 tick) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        TickMath.getSqrtRatioAtTick(tick);
-        return gasBefore - gasleft();
-    }
-
     function getTickAtSqrtRatio(uint160 sqrtPriceX96) external pure returns (int24) {
         return TickMath.getTickAtSqrtRatio(sqrtPriceX96);
-    }
-
-    function getGasCostOfGetTickAtSqrtRatio(uint160 sqrtPriceX96) external view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        TickMath.getTickAtSqrtRatio(sqrtPriceX96);
-        return gasBefore - gasleft();
     }
 
     function MIN_SQRT_RATIO() external pure returns (uint160) {
@@ -5174,18 +5057,18 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
 }
 
 // ====
-// bytecodeFormat: >=EOFv1
 // EVMVersion: >=prague
+// bytecodeFormat: >=EOFv1
 // ----
 // runTest() ->
-// ~ emit PoolCreated(address,address,uint24,int24,address): #0xe25a2f4ab57397bff1e25190d8a25c7fdbf97872, #0xe815b5c5c31d4b73175f828b1d19460b97c65b26, #0x01f4, 0x0a, 0x8b800520e09d6d4598288ad0dfd35b6237cdd278
-// ~ emit Approval(address,address,uint256) from 0xe25a2f4ab57397bff1e25190d8a25c7fdbf97872: #0x28ce22d54b78ce62f8ecdf7723a7e567c983ee61, #0xb5db0c938f8795a32bf063b59dfe98abc9b0bc57, 0x3b9aca00
-// ~ emit Approval(address,address,uint256) from 0xe815b5c5c31d4b73175f828b1d19460b97c65b26: #0x28ce22d54b78ce62f8ecdf7723a7e567c983ee61, #0xb5db0c938f8795a32bf063b59dfe98abc9b0bc57, 0x3b9aca00
-// ~ emit Initialize(uint160,int24) from 0x8b800520e09d6d4598288ad0dfd35b6237cdd278: 0x85607379ff6f79edb3e272aaeae79d5263988d26, 0x0d56f8
-// ~ emit MintCallback(uint256,uint256) from 0xb5db0c938f8795a32bf063b59dfe98abc9b0bc57: 0x00, 0x65
-// ~ emit Transfer(address,address,uint256) from 0xe815b5c5c31d4b73175f828b1d19460b97c65b26: #0x28ce22d54b78ce62f8ecdf7723a7e567c983ee61, #0x8b800520e09d6d4598288ad0dfd35b6237cdd278, 0x65
-// ~ emit Mint(address,address,int24,int24,uint128,uint256,uint256) from 0x8b800520e09d6d4598288ad0dfd35b6237cdd278: #0x28ce22d54b78ce62f8ecdf7723a7e567c983ee61, #0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc18, #0x03e8, 0xb5db0c938f8795a32bf063b59dfe98abc9b0bc57, 0x03e8, 0x00, 0x65
-// ~ emit Transfer(address,address,uint256) from 0xe815b5c5c31d4b73175f828b1d19460b97c65b26: #0x8b800520e09d6d4598288ad0dfd35b6237cdd278, #0x28ce22d54b78ce62f8ecdf7723a7e567c983ee61, 0x09
-// ~ emit SwapCallback(int256,int256) from 0xb5db0c938f8795a32bf063b59dfe98abc9b0bc57: 0x0a, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7
-// ~ emit Transfer(address,address,uint256) from 0xe25a2f4ab57397bff1e25190d8a25c7fdbf97872: #0x28ce22d54b78ce62f8ecdf7723a7e567c983ee61, #0x8b800520e09d6d4598288ad0dfd35b6237cdd278, 0x0a
-// ~ emit Swap(address,address,int256,int256,uint160,uint128,int24) from 0x8b800520e09d6d4598288ad0dfd35b6237cdd278: #0xb5db0c938f8795a32bf063b59dfe98abc9b0bc57, #0x28ce22d54b78ce62f8ecdf7723a7e567c983ee61, 0x0a, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7, 0x010a9a2fd9e126942e9c978d07, 0x03e8, 0x032b
+// ~ emit PoolCreated(address,address,uint24,int24,address): #0x4d18ab2714e94a5f3862ac4be300e9e1537d2fce, #0x967d9e7a8f74f281d9678ea76490b2ef0b36373e, #0x01f4, 0x0a, 0x817b1e47eb87bf8492509029978b9d0913d30cf9
+// ~ emit Approval(address,address,uint256) from 0x967d9e7a8f74f281d9678ea76490b2ef0b36373e: #0x245e786052196355b028213b341d43d3094fa675, #0x92b86f6a177bdb2873d49a715dcbe6369b5e1186, 0x3b9aca00
+// ~ emit Approval(address,address,uint256) from 0x4d18ab2714e94a5f3862ac4be300e9e1537d2fce: #0x245e786052196355b028213b341d43d3094fa675, #0x92b86f6a177bdb2873d49a715dcbe6369b5e1186, 0x3b9aca00
+// ~ emit Initialize(uint160,int24) from 0x817b1e47eb87bf8492509029978b9d0913d30cf9: 0x85607379ff6f79edb3e272aaeae79d5263988d26, 0x0d56f8
+// ~ emit MintCallback(uint256,uint256) from 0x92b86f6a177bdb2873d49a715dcbe6369b5e1186: 0x00, 0x65
+// ~ emit Transfer(address,address,uint256) from 0x967d9e7a8f74f281d9678ea76490b2ef0b36373e: #0x245e786052196355b028213b341d43d3094fa675, #0x817b1e47eb87bf8492509029978b9d0913d30cf9, 0x65
+// ~ emit Mint(address,address,int24,int24,uint128,uint256,uint256) from 0x817b1e47eb87bf8492509029978b9d0913d30cf9: #0x245e786052196355b028213b341d43d3094fa675, #0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc18, #0x03e8, 0x92b86f6a177bdb2873d49a715dcbe6369b5e1186, 0x03e8, 0x00, 0x65
+// ~ emit Transfer(address,address,uint256) from 0x967d9e7a8f74f281d9678ea76490b2ef0b36373e: #0x817b1e47eb87bf8492509029978b9d0913d30cf9, #0x245e786052196355b028213b341d43d3094fa675, 0x09
+// ~ emit SwapCallback(int256,int256) from 0x92b86f6a177bdb2873d49a715dcbe6369b5e1186: 0x0a, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7
+// ~ emit Transfer(address,address,uint256) from 0x4d18ab2714e94a5f3862ac4be300e9e1537d2fce: #0x245e786052196355b028213b341d43d3094fa675, #0x817b1e47eb87bf8492509029978b9d0913d30cf9, 0x0a
+// ~ emit Swap(address,address,int256,int256,uint160,uint128,int24) from 0x817b1e47eb87bf8492509029978b9d0913d30cf9: #0x92b86f6a177bdb2873d49a715dcbe6369b5e1186, #0x245e786052196355b028213b341d43d3094fa675, 0x0a, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7, 0x010a9a2fd9e126942e9c978d07, 0x03e8, 0x032b

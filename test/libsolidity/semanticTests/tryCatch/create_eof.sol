@@ -31,4 +31,4 @@ contract C {
 // EVMVersion: >=prague
 // ----
 // f() -> 0, 0, 96, 13, "test message."
-// g() -> 0xD1416F618F37EB929020DF731D1A78F392766843, 0, 96, 7, "success"
+// g() -> 0x79E227549940F29566EB81846A858E6F4108C430, 0, 96, 7, "success"
