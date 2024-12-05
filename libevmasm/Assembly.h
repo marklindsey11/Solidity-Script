@@ -61,7 +61,7 @@ public:
 		m_name(std::move(_name))
 	{
 		// Code section number 0 has to be non-returning.
-		m_codeSections.emplace_back(CodeSection{0, 0x80, {}});
+		m_codeSections.emplace_back(CodeSection{0, 0, false, {}});
 	}
 
 	std::optional<uint8_t> eofVersion() const { return m_eofVersion; }
@@ -72,7 +72,7 @@ public:
 
 	AssemblyItem newFunctionCall(uint16_t _functionID) const;
 	AssemblyItem newFunctionReturn() const;
-	uint16_t createFunction(uint8_t _args, uint8_t _rets);
+	uint16_t createFunction(uint8_t _args, uint8_t _rets, bool _canContinue);
 	void beginFunction(uint16_t _functionID);
 	void endFunction();
 
@@ -222,6 +222,7 @@ public:
 	{
 		uint8_t inputs = 0;
 		uint8_t outputs = 0;
+		bool canContinue = true;
 		AssemblyItems items{};
 	};
 

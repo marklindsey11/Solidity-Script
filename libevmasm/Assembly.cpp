@@ -708,10 +708,10 @@ AssemblyItem Assembly::newFunctionCall(uint16_t _functionID) const
 	solAssert(_functionID < m_codeSections.size(), "Call to undeclared function.");
 	solAssert(_functionID > 0, "Cannot call section 0");
 	auto const& section = m_codeSections.at(_functionID);
-	if (section.outputs != 0x80)
+	if (section.canContinue)
 		return AssemblyItem::functionCall(_functionID, section.inputs, section.outputs);
 	else
-		return AssemblyItem::jumpToFunction(_functionID, section.inputs, section.outputs);
+		return AssemblyItem::jumpToFunction(_functionID, section.inputs, section.outputs, section.canContinue);
 }
 
 AssemblyItem Assembly::newFunctionReturn() const
@@ -720,14 +720,14 @@ AssemblyItem Assembly::newFunctionReturn() const
 	return AssemblyItem::functionReturn();
 }
 
-uint16_t Assembly::createFunction(uint8_t _args, uint8_t _rets)
+uint16_t Assembly::createFunction(uint8_t _args, uint8_t _rets, bool _canContinue)
 {
 	size_t functionID = m_codeSections.size();
 	solRequire(functionID < 1024, AssemblyException, "Too many functions for EOF");
 	solAssert(m_currentCodeSection == 0, "Functions need to be declared from the main block.");
-	solAssert(_rets <= 0x80, "Too many function returns.");
+	solAssert(_rets <= 127, "Too many function returns.");
 	solAssert(_args <= 127, "Too many function inputs.");
-	m_codeSections.emplace_back(CodeSection{_args, _rets, {}});
+	m_codeSections.emplace_back(CodeSection{_args, _rets, _canContinue, {}});
 	return static_cast<uint16_t>(functionID);
 }
 
@@ -1093,7 +1093,8 @@ std::tuple<bytes, std::vector<size_t>, size_t> Assembly::createEOFHeader(std::se
 	for (auto const& codeSection: m_codeSections)
 	{
 		retBytecode.push_back(codeSection.inputs);
-		retBytecode.push_back(codeSection.outputs);
+		// According to EOF spec function output num equals 0x80 means non-returning function
+		retBytecode.push_back(codeSection.canContinue ? codeSection.outputs : 0x80);
 		appendBigEndianUint16(retBytecode, calculateMaxStackHeight(codeSection.items, codeSection.inputs));
 	}
 
@@ -1512,7 +1513,8 @@ LinkerObject const& Assembly::assembleEOF() const
 
 	solRequire(!m_codeSections.empty(), AssemblyException, "Expected at least one code section.");
 	solRequire(
-		m_codeSections.front().inputs == 0 && m_codeSections.front().outputs == 0x80, AssemblyException,
+		m_codeSections.front().inputs == 0 && m_codeSections.front().outputs == 0 && !m_codeSections.front().canContinue,
+		AssemblyException,
 		"Expected the first code section to have zero inputs and be non-returning."
 	);
 
@@ -1615,11 +1617,11 @@ LinkerObject const& Assembly::assembleEOF() const
 				solAssert(index < m_codeSections.size());
 				solAssert(item.functionSignature().argsNum <= 127);
 				solAssert(item.type() == JumpF || item.functionSignature().retsNum <= 127);
-				solAssert(item.type() == CallF || item.functionSignature().retsNum <= 128);
+				solAssert(item.type() == CallF || item.functionSignature().retsNum <= 127);
 				solAssert(m_codeSections[index].inputs == item.functionSignature().argsNum);
 				solAssert(m_codeSections[index].outputs == item.functionSignature().retsNum);
 				// If CallF the function can continue.
-				solAssert(item.type() == JumpF || item.functionSignature().canContinue());
+				solAssert(item.type() == JumpF || item.functionSignature().canContinue);
 				appendBigEndianUint16(ret.bytecode, item.data());
 				break;
 			}

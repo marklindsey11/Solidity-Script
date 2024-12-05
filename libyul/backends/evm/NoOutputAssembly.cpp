@@ -120,11 +120,11 @@ std::pair<std::shared_ptr<AbstractAssembly>, AbstractAssembly::SubID> NoOutputAs
 	return {};
 }
 
-AbstractAssembly::FunctionID NoOutputAssembly::registerFunction(uint8_t _args, uint8_t _rets)
+AbstractAssembly::FunctionID NoOutputAssembly::registerFunction(uint8_t _args, uint8_t _rets, bool _canContinue)
 {
 	yulAssert(m_context.numFunctions <= std::numeric_limits<AbstractAssembly::FunctionID>::max());
 	AbstractAssembly::FunctionID id = static_cast<AbstractAssembly::FunctionID>(m_context.numFunctions++);
-	m_context.functionSignatures[id] = std::make_pair(_args, _rets);
+	m_context.functionSignatures[id] = std::tuple(_args, _rets, _canContinue);
 	return id;
 }
 
@@ -139,22 +139,22 @@ void NoOutputAssembly::beginFunction(FunctionID _functionID)
 void NoOutputAssembly::endFunction()
 {
 	yulAssert(m_currentFunctionID != 0, "End function without begin function.");
-	auto const rets = m_context.functionSignatures.at(m_currentFunctionID).second;
-	yulAssert(rets == 0x80 || m_stackHeight == rets, "Stack height mismatch at function end.");
+	auto const [_, rets, canContinue] = m_context.functionSignatures.at(m_currentFunctionID);
+	yulAssert(!canContinue || m_stackHeight == rets, "Stack height mismatch at function end.");
 	m_currentFunctionID = 0;
 }
 
 void NoOutputAssembly::appendFunctionCall(FunctionID _functionID)
 {
-	auto [args, rets] = m_context.functionSignatures.at(_functionID);
+	auto [args, rets, _] = m_context.functionSignatures.at(_functionID);
 	m_stackHeight += static_cast<int>(rets) - static_cast<int>(args);
 }
 
 void NoOutputAssembly::appendFunctionReturn()
 {
 	yulAssert(m_currentFunctionID != 0, "End function without begin function.");
-	auto const rets = m_context.functionSignatures.at(m_currentFunctionID).second;
-	yulAssert(rets == 0x80 || m_stackHeight == rets, "Stack height mismatch at function end.");
+	auto const [_, rets, canContinue] = m_context.functionSignatures.at(m_currentFunctionID);
+	yulAssert(!canContinue || m_stackHeight == rets, "Stack height mismatch at function end.");
 }
 
 void NoOutputAssembly::appendDataOffset(std::vector<AbstractAssembly::SubID> const&)

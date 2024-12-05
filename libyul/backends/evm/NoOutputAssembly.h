@@ -42,7 +42,7 @@ class NoOutputAssembly;
 struct NoOutputAssemblyContext
 {
 	size_t numFunctions = 0;
-	std::map<uint16_t, std::pair<uint8_t, uint8_t>> functionSignatures;
+	std::map<uint16_t, std::tuple<uint8_t, uint8_t, bool>> functionSignatures;
 };
 
 /**
@@ -73,7 +73,7 @@ public:
 
 	void appendAssemblySize() override;
 	std::pair<std::shared_ptr<AbstractAssembly>, SubID> createSubAssembly(bool _creation, std::string _name = "") override;
-	FunctionID registerFunction(uint8_t _args, uint8_t _rets) override;
+	FunctionID registerFunction(uint8_t _args, uint8_t _rets, bool _canContinue) override;
 	void beginFunction(FunctionID) override;
 	void endFunction() override;
 	void appendFunctionCall(FunctionID _functionID) override;
