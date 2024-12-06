@@ -238,7 +238,7 @@ void TypeChecker::endVisit(ContractDefinition const& _contract)
 	{
 		if (_contract.isLibrary() || _contract.abstract())
 			m_errorReporter.typeError(
-				78_error,
+				7587_error,
 				baseLocation->location(),
 				"Storage base location cannot be specified for abstract contracts or libraries"
 			);
