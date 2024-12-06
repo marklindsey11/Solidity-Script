@@ -239,7 +239,7 @@ to limit the amount of gas.
 If the creation fails (due to out-of-stack, not enough balance or other problems),
 an exception is thrown.
 
-Salted contract creations / create2
+Salted contract creations / CREATE2
 -----------------------------------
 
 When creating a contract, the address of the contract is computed from
