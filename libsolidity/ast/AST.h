@@ -580,6 +580,8 @@ public:
 
 	ASTPointer<Expression> const& storageBaseLocationExpression() const { return m_storageBaseLocationExpression; }
 
+	u256 storageBaseLocationValue() const { return annotation().storageBaseLocationValue; }
+
 	std::string fullyQualifiedName() const { return sourceUnitName() + ":" + name(); }
 
 	Type const* type() const override;

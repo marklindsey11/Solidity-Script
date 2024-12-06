@@ -236,6 +236,13 @@ void TypeChecker::endVisit(ContractDefinition const& _contract)
 {
 	if (ASTPointer<Expression> const baseLocation = _contract.storageBaseLocationExpression())
 	{
+		if (_contract.isLibrary() || _contract.abstract())
+			m_errorReporter.typeError(
+				78_error,
+				baseLocation->location(),
+				"Storage base location cannot be specified for abstract contracts or libraries"
+			);
+
 		if (!*baseLocation->annotation().isPure)
 		{
 			// TODO: handle erc7201 as a builtin function ?
@@ -278,7 +285,7 @@ void TypeChecker::endVisit(ContractDefinition const& _contract)
 		if (auto const* rationalType = dynamic_cast<RationalNumberType const*>(expressionType))
 		{
 			solAssert(!rationalType->isFractional());
-			// store value ?
+			_contract.annotation().storageBaseLocationValue = u256(rationalType->value().numerator());
 		}
 		else
 			m_errorReporter.typeError(
