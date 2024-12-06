@@ -114,14 +114,14 @@ public:
 		// It can be done by template constructor with Instruction as template parameter i.e. Same for JumpF below.
 		AssemblyItem result(CallF, Instruction::CALLF, _functionID, _debugData);
 		solAssert(_args <= 127 && _rets <= 127);
-		result.m_functionSignature = {_args, _rets};
+		result.m_functionSignature = {_args, _rets, true};
 		return result;
 	}
-	static AssemblyItem jumpToFunction(uint16_t _functionID, uint8_t _args, uint8_t _rets, langutil::DebugData::ConstPtr _debugData = langutil::DebugData::create())
+	static AssemblyItem jumpToFunction(uint16_t _functionID, uint8_t _args, uint8_t _rets, bool _canContinue, langutil::DebugData::ConstPtr _debugData = langutil::DebugData::create())
 	{
 		AssemblyItem result(JumpF, Instruction::JUMPF, _functionID, _debugData);
-		solAssert(_args <= 127 && _rets <= 128);
-		result.m_functionSignature = {_args, _rets};
+		solAssert(_args <= 127 && _rets <= 127);
+		result.m_functionSignature = {_args, _rets, _canContinue};
 		return result;
 	}
 	static AssemblyItem functionReturn(langutil::DebugData::ConstPtr _debugData = langutil::DebugData::create())
@@ -294,10 +294,10 @@ public:
 	{
 		/// Number of EOF function arguments. must be less than 127
 		uint8_t argsNum;
-		/// Number of EOF function return values. Must be less than 128. 128(0x80) means that it's non-returning.
+		/// Number of EOF function return values. Must be less than 127.
 		uint8_t retsNum;
-
-		bool canContinue() const { return retsNum != 0x80;}
+		/// False if non-returning function.
+		bool canContinue;
 	};
 
 	FunctionSignature const& functionSignature() const

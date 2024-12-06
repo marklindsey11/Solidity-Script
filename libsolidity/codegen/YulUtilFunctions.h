@@ -550,7 +550,8 @@ public:
 	/// signature: () -> arguments
 	std::string copyConstructorArgumentsToMemoryFunction(
 		ContractDefinition const& _contract,
-		std::string const& _creationObjectName
+		std::string const& _creationObjectName,
+		std::optional<uint8_t> _eofVersion
 	);
 
 	/// @returns the name of a function that copies code from a given address to a newly

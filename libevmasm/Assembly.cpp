@@ -46,6 +46,7 @@
 #include <fstream>
 #include <limits>
 #include <iterator>
+#include <stack>
 
 using namespace solidity;
 using namespace solidity::evmasm;
@@ -707,10 +708,10 @@ AssemblyItem Assembly::newFunctionCall(uint16_t _functionID) const
 	solAssert(_functionID < m_codeSections.size(), "Call to undeclared function.");
 	solAssert(_functionID > 0, "Cannot call section 0");
 	auto const& section = m_codeSections.at(_functionID);
-	if (section.outputs != 0x80)
+	if (section.canContinue)
 		return AssemblyItem::functionCall(_functionID, section.inputs, section.outputs);
 	else
-		return AssemblyItem::jumpToFunction(_functionID, section.inputs, section.outputs);
+		return AssemblyItem::jumpToFunction(_functionID, section.inputs, section.outputs, section.canContinue);
 }
 
 AssemblyItem Assembly::newFunctionReturn() const
@@ -719,14 +720,14 @@ AssemblyItem Assembly::newFunctionReturn() const
 	return AssemblyItem::functionReturn();
 }
 
-uint16_t Assembly::createFunction(uint8_t _args, uint8_t _rets)
+uint16_t Assembly::createFunction(uint8_t _args, uint8_t _rets, bool _canContinue)
 {
 	size_t functionID = m_codeSections.size();
 	solRequire(functionID < 1024, AssemblyException, "Too many functions for EOF");
 	solAssert(m_currentCodeSection == 0, "Functions need to be declared from the main block.");
-	solAssert(_rets <= 0x80, "Too many function returns.");
+	solAssert(_rets <= 127, "Too many function returns.");
 	solAssert(_args <= 127, "Too many function inputs.");
-	m_codeSections.emplace_back(CodeSection{_args, _rets, {}});
+	m_codeSections.emplace_back(CodeSection{_args, _rets, _canContinue, {}});
 	return static_cast<uint16_t>(functionID);
 }
 
@@ -971,6 +972,84 @@ void appendBigEndianUint16(bytes& _dest, ValueT _value)
 	assertThrow(_value <= 0xFFFF, AssemblyException, "");
 	appendBigEndian(_dest, 2, static_cast<size_t>(_value));
 }
+
+uint16_t calculateMaxStackHeight(AssemblyItems const& _items, uint16_t _args)
+{
+	static auto constexpr UNVISITED = std::numeric_limits<size_t>::max();
+
+	solAssert(!_items.empty());
+	uint16_t maxStackHeight = _args;
+	std::stack<size_t> worklist;
+	std::vector<size_t> stackHeights(_items.size(), UNVISITED);
+
+	// Init first item stack height to number of inputs to the code section
+	// stackHeights stores stack height for an item before the item execution
+	stackHeights[0] = _args;
+	// Push first item index to the worklist
+	worklist.push(0u);
+	while (!worklist.empty())
+	{
+		size_t idx = worklist.top();
+		worklist.pop();
+		AssemblyItem const& item = _items[idx];
+		size_t stackHeightChange = item.deposit();
+		size_t stackHeight = stackHeights[idx];
+		solAssert(stackHeight != UNVISITED);
+
+		std::vector<size_t> successors;
+
+		// Add next instruction to successors for non-changing control flow instructions
+		if (!(item.hasInstruction() && SemanticInformation::terminatesControlFlow(item.instruction())) &&
+			item.type() != RelativeJump &&
+			item.type() != RetF &&
+			item.type() != ReturnContract &&
+			item.type() != JumpF
+		)
+		{
+			solAssert(idx < _items.size() - 1, "No terminating instruction.");
+			successors.emplace_back(idx + 1);
+		}
+
+		// Add jumps destinations to successors
+		if (item.type() == RelativeJump || item.type() == ConditionalRelativeJump)
+		{
+			auto const it = std::find(_items.begin(), _items.end(), item.tag());
+			solAssert(it != _items.end(), "Tag not found.");
+			successors.emplace_back(static_cast<size_t>(std::distance(_items.begin(), it)));
+		}
+
+		solAssert(stackHeight + stackHeightChange <= std::numeric_limits<uint16_t>::max(), "Invalid stack height");
+		maxStackHeight = std::max(maxStackHeight, static_cast<uint16_t>(stackHeight + stackHeightChange));
+		stackHeight += stackHeightChange;
+
+		// Set stack height for all instruction successors
+		for (size_t s: successors)
+		{
+			solAssert(s < stackHeights.size());
+			// Set stack height for newly visited
+			if (stackHeights[s] == UNVISITED)
+			{
+				stackHeights[s] = stackHeight;
+				worklist.push(s);
+			}
+			else
+			{
+				solAssert(s < stackHeights.size());
+				// For backward jump successor stack height must be equal
+				if (s < idx)
+					solAssert(stackHeights[s] == stackHeight, "Stack height mismatch.");
+
+				// If successor stack height is smaller update it and recalculate
+				if (stackHeight > stackHeights[s])
+				{
+					stackHeights[s] = stackHeight;
+					worklist.push(s);
+				}
+			}
+		}
+	}
+	return maxStackHeight;
+}
 }
 
 std::tuple<bytes, std::vector<size_t>, size_t> Assembly::createEOFHeader(std::set<ContainerID> const& _referencedSubIds) const
@@ -1014,9 +1093,9 @@ std::tuple<bytes, std::vector<size_t>, size_t> Assembly::createEOFHeader(std::se
 	for (auto const& codeSection: m_codeSections)
 	{
 		retBytecode.push_back(codeSection.inputs);
-		retBytecode.push_back(codeSection.outputs);
-		// TODO: Add stack height calculation
-		appendBigEndianUint16(retBytecode, 0xFFFFu);
+		// According to EOF spec function output num equals 0x80 means non-returning function
+		retBytecode.push_back(codeSection.canContinue ? codeSection.outputs : 0x80);
+		appendBigEndianUint16(retBytecode, calculateMaxStackHeight(codeSection.items, codeSection.inputs));
 	}
 
 	return {retBytecode, codeSectionSizePositions, dataSectionSizePosition};
@@ -1434,7 +1513,8 @@ LinkerObject const& Assembly::assembleEOF() const
 
 	solRequire(!m_codeSections.empty(), AssemblyException, "Expected at least one code section.");
 	solRequire(
-		m_codeSections.front().inputs == 0 && m_codeSections.front().outputs == 0x80, AssemblyException,
+		m_codeSections.front().inputs == 0 && m_codeSections.front().outputs == 0 && !m_codeSections.front().canContinue,
+		AssemblyException,
 		"Expected the first code section to have zero inputs and be non-returning."
 	);
 
@@ -1537,11 +1617,11 @@ LinkerObject const& Assembly::assembleEOF() const
 				solAssert(index < m_codeSections.size());
 				solAssert(item.functionSignature().argsNum <= 127);
 				solAssert(item.type() == JumpF || item.functionSignature().retsNum <= 127);
-				solAssert(item.type() == CallF || item.functionSignature().retsNum <= 128);
+				solAssert(item.type() == CallF || item.functionSignature().retsNum <= 127);
 				solAssert(m_codeSections[index].inputs == item.functionSignature().argsNum);
 				solAssert(m_codeSections[index].outputs == item.functionSignature().retsNum);
 				// If CallF the function can continue.
-				solAssert(item.type() == JumpF || item.functionSignature().canContinue());
+				solAssert(item.type() == JumpF || item.functionSignature().canContinue);
 				appendBigEndianUint16(ret.bytecode, item.data());
 				break;
 			}
@@ -1569,7 +1649,16 @@ LinkerObject const& Assembly::assembleEOF() const
 	}
 
 	for (auto i: referencedSubIds)
-		ret.bytecode += m_subs[i]->assemble().bytecode;
+	{
+		size_t const subAssemblyPostionInParentObject = ret.bytecode.size();
+		auto const& subAssemblyLinkerObject = m_subs[i]->assemble();
+		// Append subassembly bytecode to the parent assembly result bytecode
+		ret.bytecode += subAssemblyLinkerObject.bytecode;
+		// Add subassembly link references to parent linker object.
+		// Offset accordingly to subassembly position in parent obejct bytecode
+		for (auto const& [subAssemblyLinkRefPosition, linkRef]: subAssemblyLinkerObject.linkReferences)
+			ret.linkReferences[subAssemblyPostionInParentObject + subAssemblyLinkRefPosition] = linkRef;
+	}
 
 	// TODO: Fill functionDebugData for EOF. It probably should be handled for new code section in the loop above.
 	solRequire(m_namedTags.empty(), AssemblyException, "Named tags must be empty in EOF context.");

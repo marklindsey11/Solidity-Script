@@ -1622,11 +1622,16 @@ void IRGeneratorForStatements::endVisit(FunctionCall const& _functionCall)
 		Whiskers templ(R"(
 			let <gas> := 0
 			if iszero(<value>) { <gas> := <callStipend> }
-			let <success> := call(<gas>, <address>, <value>, 0, 0, 0, 0)
+			<?eof>
+				let <success> := iszero(extcall(<address>, 0, 0, <value>))
+			<!eof>
+				let <success> := call(<gas>, <address>, <value>, 0, 0, 0, 0)
+			</eof>
 			<?isTransfer>
 				if iszero(<success>) { <forwardingRevert>() }
 			</isTransfer>
 		)");
+		templ("eof", m_context.eofVersion().has_value());
 		templ("gas", m_context.newYulVariable());
 		templ("callStipend", toString(evmasm::GasCosts::callStipend));
 		templ("address", address);
@@ -1669,17 +1674,30 @@ void IRGeneratorForStatements::endVisit(FunctionCall const& _functionCall)
 			<?isECRecover>
 				mstore(0, 0)
 			</isECRecover>
-			let <success> := <call>(<gas>, <address> <?isCall>, 0</isCall>, <pos>, sub(<end>, <pos>), 0, 32)
+			<?eof>
+				// EOF always uses extstaticcall
+				let <success> := iszero(extstaticcall(<address>, <pos>, sub(<end>, <pos>)))
+			<!eof>
+				let <success> := <call>(<gas>, <address> <?isCall>, 0</isCall>, <pos>, sub(<end>, <pos>), 0, 32)
+			</eof>
 			if iszero(<success>) { <forwardingRevert>() }
+			<?eof>
+				if eq(returndatasize(), 32) { returndatacopy(0, 0, 32) }
+			</eof>
 			let <retVars> := <shl>(mload(0))
 		)");
-		templ("call", m_context.evmVersion().hasStaticCall() ? "staticcall" : "call");
-		templ("isCall", !m_context.evmVersion().hasStaticCall());
+		auto const eof = m_context.eofVersion().has_value();
+		if (!eof)
+		{
+			templ("call", m_context.evmVersion().hasStaticCall() ? "staticcall" : "call");
+			templ("isCall", !m_context.evmVersion().hasStaticCall());
+		}
 		templ("shl", m_utils.shiftLeftFunction(offset * 8));
 		templ("allocateUnbounded", m_utils.allocateUnboundedFunction());
 		templ("pos", m_context.newYulVariable());
 		templ("end", m_context.newYulVariable());
 		templ("isECRecover", FunctionType::Kind::ECRecover == functionType->kind());
+		templ("eof", eof);
 		if (FunctionType::Kind::ECRecover == functionType->kind())
 			templ("encodeArgs", m_context.abiFunctions().tupleEncoder(argumentTypes, parameterTypes));
 		else
@@ -1844,7 +1862,7 @@ void IRGeneratorForStatements::endVisit(MemberAccess const& _memberAccess)
 			solAssert(dynamic_cast<AddressType const&>(*_memberAccess.expression().annotation().type).stateMutability() == StateMutability::Payable);
 			define(IRVariable{_memberAccess}.part("address"), _memberAccess.expression());
 		}
-		else if (std::set<std::string>{"call", "callcode", "delegatecall", "staticcall"}.count(member))
+		else if (std::set<std::string>{"call", "extcall", "callcode", "delegatecall" , "extdelegatecall", "staticcall", "extstaticcall"}.count(member))
 			define(IRVariable{_memberAccess}.part("address"), _memberAccess.expression());
 		else
 			solAssert(false, "Invalid member access to address");
@@ -2642,7 +2660,7 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 	}
 
 	// NOTE: When the expected size of returndata is static, we pass that in to the call opcode and it gets copied automatically.
-    // When it's dynamic, we get zero from estimatedReturnSize() instead and then we need an explicit returndatacopy().
+	// When it's dynamic, we get zero from estimatedReturnSize() instead and then we need an explicit returndatacopy().
 	Whiskers templ(R"(
 		<?checkExtcodesize>
 			if iszero(extcodesize(<address>)) { <revertNoCode>() }
@@ -2652,7 +2670,11 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 		mstore(<pos>, <shl28>(<funSel>))
 		let <end> := <encodeArgs>(add(<pos>, 4) <argumentString>)
 
-		let <success> := <call>(<gas>, <address>, <?hasValue> <value>, </hasValue> <pos>, sub(<end>, <pos>), <pos>, <staticReturndataSize>)
+		<?eof>
+			let <success> := iszero(<call>(<address>, <pos>, sub(<end>, <pos>) <?hasValue>, <value></hasValue>))
+		<!eof>
+			let <success> := <call>(<gas>, <address>, <?hasValue> <value>, </hasValue> <pos>, sub(<end>, <pos>), <pos>, <staticReturndataSize>)
+		</eof>
 		<?noTryCall>
 			if iszero(<success>) { <forwardingRevert>() }
 		</noTryCall>
@@ -2667,6 +2689,9 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 					if gt(<returnDataSizeVar>, returndatasize()) {
 						<returnDataSizeVar> := returndatasize()
 					}
+					<?eof>
+						returndatacopy(<pos>, 0, <returnDataSizeVar>)
+					</eof>
 				</supportsReturnData>
 			</isReturndataSizeDynamic>
 
@@ -2678,6 +2703,8 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 		}
 	)");
 	templ("revertNoCode", m_utils.revertReasonIfDebugFunction("Target contract does not contain code"));
+	auto const eof = m_context.eofVersion().has_value();
+	templ("eof", eof);
 
 	// We do not need to check extcodesize if we expect return data: If there is no
 	// code, the call will return empty data and the ABI decoder will revert.
@@ -2685,9 +2712,12 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 	for (auto const& t: returnInfo.returnTypes)
 		encodedHeadSize += t->decodingType()->calldataHeadSize();
 	bool const checkExtcodesize =
-		encodedHeadSize == 0 ||
-		!m_context.evmVersion().supportsReturndata() ||
-		m_context.revertStrings() >= RevertStrings::Debug;
+		!eof &&
+		(
+			encodedHeadSize == 0 ||
+			!m_context.evmVersion().supportsReturndata() ||
+			m_context.revertStrings() >= RevertStrings::Debug
+		);
 	templ("checkExtcodesize", checkExtcodesize);
 
 	templ("pos", m_context.newYulVariable());
@@ -2747,12 +2777,13 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 		templ("gas", "sub(gas(), " + formatNumber(gasNeededByCaller) + ")");
 	}
 	// Order is important here, STATICCALL might overlap with DELEGATECALL.
+	std::string const callPrefix = eof ? "ext" : "";
 	if (isDelegateCall)
-		templ("call", "delegatecall");
+		templ("call", callPrefix + "delegatecall");
 	else if (useStaticCall)
-		templ("call", "staticcall");
+		templ("call", callPrefix + "staticcall");
 	else
-		templ("call", "call");
+		templ("call", callPrefix + "call");
 
 	templ("forwardingRevert", m_utils.forwardingRevertFunction());
 
@@ -2791,13 +2822,21 @@ void IRGeneratorForStatements::appendBareCall(
 			let <length> := mload(<arg>)
 		</needsEncoding>
 
-		let <success> := <call>(<gas>, <address>, <?+value> <value>, </+value> <pos>, <length>, 0, 0)
+		<?eof>
+			let <success> := <call>(<address>, <pos>, <length> <?+value>, <value></+value>)
+			<success> := iszero(<success>)
+		<!eof>
+			let <success> := <call>(<gas>, <address>, <?+value> <value>, </+value> <pos>, <length>, 0, 0)
+		</eof>
+
 		let <returndataVar> := <extractReturndataFunction>()
 	)");
 
 	templ("allocateUnbounded", m_utils.allocateUnboundedFunction());
 	templ("pos", m_context.newYulVariable());
 	templ("length", m_context.newYulVariable());
+	auto const eof = m_context.eofVersion().has_value();
+	templ("eof", eof);
 
 	templ("arg", IRVariable(*_arguments.front()).commaSeparatedList());
 	Type const& argType = type(*_arguments.front());
@@ -2816,19 +2855,20 @@ void IRGeneratorForStatements::appendBareCall(
 
 	templ("address", IRVariable(_functionCall.expression()).part("address").name());
 
+	std::string const callPrefix = eof ? "ext" : "";
 	if (funKind == FunctionType::Kind::BareCall)
 	{
 		templ("value", funType.valueSet() ? IRVariable(_functionCall.expression()).part("value").name() : "0");
-		templ("call", "call");
+		templ("call", callPrefix + "call");
 	}
 	else
 	{
 		solAssert(!funType.valueSet(), "Value set for delegatecall or staticcall.");
 		templ("value", "");
 		if (funKind == FunctionType::Kind::BareStaticCall)
-			templ("call", "staticcall");
+			templ("call", callPrefix + "staticcall");
 		else
-			templ("call", "delegatecall");
+			templ("call", callPrefix + "delegatecall");
 	}
 
 	if (funType.gasSet())

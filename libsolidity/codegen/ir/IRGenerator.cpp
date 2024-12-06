@@ -177,7 +177,11 @@ std::string IRGenerator::generate(
 			constructorParams.emplace_back(m_context.newYulVariable());
 		t(
 			"copyConstructorArguments",
-			m_utils.copyConstructorArgumentsToMemoryFunction(_contract, IRNames::creationObject(_contract))
+			m_utils.copyConstructorArgumentsToMemoryFunction(
+				_contract,
+				IRNames::creationObject(_contract),
+				m_context.eofVersion()
+			)
 		);
 	}
 	t("constructorParams", joinHumanReadable(constructorParams));
@@ -1018,6 +1022,7 @@ std::string IRGenerator::deployCode(ContractDefinition const& _contract)
 		t("auxDataStart", std::to_string(CompilerUtils::generalPurposeMemoryStart));
 		solAssert(m_context.reservedMemorySize() <= 0xFFFF, "Reserved memory size exceeded maximum allowed EOF data section size.");
 		t("auxDataSize", std::to_string(m_context.reservedMemorySize()));
+		t("library", _contract.isLibrary());
 	}
 	else
 		t("immutables", std::move(immutables));
@@ -1152,6 +1157,13 @@ void IRGenerator::resetContext(ContractDefinition const& _contract, ExecutionCon
 		m_context.debugInfoSelection(),
 		m_context.soliditySourceProvider()
 	);
+	if (m_eofVersion.has_value() && _context == ExecutionContext::Deployed)
+	{
+		newContext.setImmutableVariables(m_context.immutableVariables());
+		if (_contract.isLibrary())
+			newContext.setLibraryAddressImmutableOffset(m_context.libraryAddressImmutableOffset());
+	}
+
 	m_context = std::move(newContext);
 
 	m_context.setMostDerivedContract(_contract);

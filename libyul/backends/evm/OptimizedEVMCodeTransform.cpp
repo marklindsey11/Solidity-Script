@@ -58,10 +58,10 @@ std::vector<StackTooDeepError> OptimizedEVMCodeTransform::run(
 			auto const& info = dfg->functionInfo.at(function);
 			yulAssert(info.parameters.size() <= 0x7f);
 			yulAssert(info.returnVariables.size() <= 0x7f);
-			// According to EOF spec function output num equals 0x80 means non-returning function
 			auto functionID = _assembly.registerFunction(
 				static_cast<uint8_t>(info.parameters.size()),
-				static_cast<uint8_t>(info.canContinue ? info.returnVariables.size() : 0x80)
+				static_cast<uint8_t>(info.returnVariables.size()),
+				info.canContinue
 			);
 			_builtinContext.functionIDs[function] = functionID;
 		}
